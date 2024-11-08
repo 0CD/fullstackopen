@@ -2,12 +2,12 @@ import React from 'react'
 
 import Person from './Person'
 
-export const Persons = ({persons, filteredPersons, filter}) => {
+export const Persons = ({persons, filteredPersons, filter, deletePerson}) => {
     if (filter === '') {
         return (
             <div>
                 {persons.map(person =>
-                    <Person key={person.id} person={person}/>
+                    <Person key={person.id} person={person} deletePerson={deletePerson}/>
                 )}
             </div>
         )
@@ -15,7 +15,7 @@ export const Persons = ({persons, filteredPersons, filter}) => {
         return (
             <div>
                 {filteredPersons.map(person =>
-                    <Person key={person.id} person={person}/>
+                    <Person key={person.id} person={person} deletePerson={deletePerson}/>
                 )}
             </div>
         )
