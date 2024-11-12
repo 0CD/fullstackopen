@@ -1,0 +1,2 @@
+- frontend: https://fullstackopen-cq3h.onrender.com/
+- backend: https://fullstackopen-cq3h.onrender.com/api/persons
