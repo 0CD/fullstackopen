@@ -69,7 +69,7 @@ const App = () => {
                         .catch(error => {
                             console.log(error)
                             setMessage({
-                                text: `Could not update ${existingPerson.name}. Check console for more information.`,
+                                text: `Could not update ${existingPerson.name}. ${error.response.data.error}`,
                                 type: 'error'
                             })
                             setTimeout(() => {
@@ -101,7 +101,7 @@ const App = () => {
                     .catch(error => {
                         console.log(error)
                         setMessage({
-                            text: `Could not add ${person.name}. Check console for more information.`,
+                            text: `Could not add ${person.name}. ${error.response.data.error}`,
                             type: 'error'
                         })
                         setTimeout(() => {
