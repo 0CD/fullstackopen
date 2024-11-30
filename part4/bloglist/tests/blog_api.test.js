@@ -219,6 +219,67 @@ describe('when there is initially one user in db', () => {
         const usernames = usersAtEnd.map(u => u.username)
         assert(usernames.includes(newUser.username))
     })
+
+    test('creation fails with proper statuscode and message if username already taken', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            username: 'root',
+            name: 'Superuser',
+            password: 'salainen',
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDb()
+        assert(result.body.error.includes('expected `username` to be unique'))
+
+        assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
+
+    test('creating fails with invalid username', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            username: 'ro',
+            name: 'Superuser',
+            password: 'password'
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDb()
+        assert(usersAtStart.length === usersAtEnd.length)
+        assert(result.body.error.includes('is shorter than the minimum allowed length'))
+    })
+
+    test('creating fails with invalid password', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            username: 'validUsername',
+            name: 'Superuser',
+            password: 'pa'
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDb()
+        assert(usersAtStart.length === usersAtEnd.length)
+        assert(result.body.error.includes('Password must be at least 3 characters long'))
+    })
 })
 
 after(async () => {
