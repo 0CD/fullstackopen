@@ -146,6 +146,65 @@ describe('API: POST blogs', () => {
     })
 })
 
+describe('API: DELETE blogs', () => {
+    test('a blog with an invalid id returns 404', async () => {
+      await api
+            .delete(`/api/blogs/g1bb3r1shid`)
+            .expect(404)
+    })
+
+    test('a blog can be deleted', async () => {
+        await api
+            .delete(`/api/blogs/5a422b3a1b54a676234d17f9`)
+            .expect(204)
+
+        const response = await api.get('/api/blogs')
+
+        const blogsAtEnd = response.body.map(r => r.title)
+        assert(blogsAtEnd.length === initialBlogs.length - 1)
+        assert(!blogsAtEnd.includes('Canonical string reduction'))
+    })
+})
+
+describe('API: PUT blogs', () => {
+    test('a blog with an invalid id returns 404', async () => {
+        const updatedBlog = {
+            title: "React patterns",
+            author: "Sebastian Fors",
+            url: "https://reactpatterns.com/",
+            likes: 10
+        }
+
+        await api
+            .put(`/api/blogs/g1bb3r1shid`)
+            .send(updatedBlog)
+            .expect(404)
+    })
+
+    test('a blog can be updated', async () => {
+        const updatedBlog = {
+            title: "React patterns",
+            author: "Sebastian Fors",
+            url: "https://reactpatterns.com/",
+            likes: 10
+        }
+
+        await api
+            .put(`/api/blogs/5a422a851b54a676234d17f7`)
+            .send(updatedBlog)
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        const response = await api.get('/api/blogs')
+
+        const authors = response.body.map(r => r.author)
+        assert(authors.includes('Sebastian Fors'))
+
+        const likes = response.body.map(r => r.likes)
+        assert(likes.includes(10))
+    })
+})
+
 after(async () => {
     await mongoose.connection.close()
 })
