@@ -11,6 +11,16 @@ const helper = require('./test_helper')
 
 beforeEach(async () => {
     await Blog.deleteMany({})
+    await User.deleteMany({})
+
+    const newUser = new User({
+        username: 'forsen',
+        name: 'Sebastian Fors',
+        password: 'ILoveForsen'
+    })
+
+    await newUser.save()
+
     let blogObject = new Blog(helper.initialBlogs[0])
     await blogObject.save()
     blogObject = new Blog(helper.initialBlogs[1])
@@ -47,13 +57,17 @@ describe('API: GET blogs', () => {
 
 describe('API: POST blogs', () => {
     test('a valid blog can be added', async () => {
+        const users = await User.find({})
+        const user = users[0]
+
         const newBlog = {
             _id: "5a422b891b54a676234d17fa",
             title: "First class tests",
             author: "Robert C. Martin",
             url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
             likes: 10,
-            __v: 0
+            __v: 0,
+            user: user
         }
 
         await api
@@ -67,6 +81,9 @@ describe('API: POST blogs', () => {
         const titles = blogsAtEnd.map(r => r.title)
         assert.strictEqual(titles.length, helper.initialBlogs.length + 1)
         assert(titles.includes('First class tests'))
+
+        const blogUserIds = blogsAtEnd.map(r => r.user ? r.user._id.toString() : null)
+        assert(blogUserIds.includes(user._id.toString()))
     })
 
     test('a blog without title is not added', async () => {
