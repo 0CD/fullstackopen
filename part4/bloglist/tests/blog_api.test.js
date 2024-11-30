@@ -4,33 +4,16 @@ const assert = require("node:assert");
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
-
+const bcrypt = require('bcrypt')
+const User = require('../models/user')
 const api = supertest(app)
-
-const initialBlogs = [
-    {
-        _id: "5a422b3a1b54a676234d17f9",
-        title: "Canonical string reduction",
-        author: "Edsger W. Dijkstra",
-        url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-        likes: 12,
-        __v: 0
-    },
-    {
-        _id: "5a422a851b54a676234d17f7",
-        title: "React patterns",
-        author: "Michael Chan",
-        url: "https://reactpatterns.com/",
-        likes: 7,
-        __v: 0
-    }
-]
+const helper = require('./test_helper')
 
 beforeEach(async () => {
     await Blog.deleteMany({})
-    let blogObject = new Blog(initialBlogs[0])
+    let blogObject = new Blog(helper.initialBlogs[0])
     await blogObject.save()
-    blogObject = new Blog(initialBlogs[1])
+    blogObject = new Blog(helper.initialBlogs[1])
     await blogObject.save()
 })
 
@@ -43,22 +26,22 @@ describe('API: GET blogs', () => {
     })
 
     test('there are two blogs', async () => {
-        const response = await api.get('/api/blogs')
+        const blogs = await helper.blogsInDb()
 
-        assert.strictEqual(response.body.length, initialBlogs.length)
+        assert.strictEqual(blogs.length, helper.initialBlogs.length)
     })
 
     test('the first blog is about Canonical string reduction', async () => {
-        const response = await api.get('/api/blogs')
+        const blogs = await helper.blogsInDb()
 
-        const contents = response.body.map(r => r.title)
-        assert(contents.includes('Canonical string reduction'))
+        const titles = blogs.map(r => r.title)
+        assert(titles.includes('Canonical string reduction'))
     })
 
     test('blogs have an id property instead of _id', async () => {
-        const response = await api.get('/api/blogs')
+        const blogs = await helper.blogsInDb()
 
-        assert(response.body[0].id)
+        assert(blogs[0].id)
     })
 })
 
@@ -79,11 +62,11 @@ describe('API: POST blogs', () => {
             .expect(201)
             .expect('Content-Type', /application\/json/)
 
-        const response = await api.get('/api/blogs')
+        const blogsAtEnd = await helper.blogsInDb()
 
-        const contents = response.body.map(r => r.title)
-        assert.strictEqual(response.body.length, initialBlogs.length + 1)
-        assert(contents.includes('First class tests'))
+        const titles = blogsAtEnd.map(r => r.title)
+        assert.strictEqual(titles.length, helper.initialBlogs.length + 1)
+        assert(titles.includes('First class tests'))
     })
 
     test('a blog without title is not added', async () => {
@@ -100,9 +83,9 @@ describe('API: POST blogs', () => {
             .send(newBlog)
             .expect(400)
 
-        const response = await api.get('/api/blogs')
+        const blogsAtEnd = await helper.blogsInDb()
 
-        assert.strictEqual(response.body.length, initialBlogs.length)
+        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
     })
 
     test('a blog without url is not added', async () => {
@@ -119,9 +102,9 @@ describe('API: POST blogs', () => {
             .send(newBlog)
             .expect(400)
 
-        const response = await api.get('/api/blogs')
+        const blogsAtEnd = await helper.blogsInDb()
 
-        assert.strictEqual(response.body.length, initialBlogs.length)
+        assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
     })
 
     test('a blog without likes defaults to 0', async () => {
@@ -139,10 +122,10 @@ describe('API: POST blogs', () => {
             .expect(201)
             .expect('Content-Type', /application\/json/)
 
-        const response = await api.get('/api/blogs')
+        const blogsAtEnd = await helper.blogsInDb()
 
-        const contents = response.body.map(r => r.likes)
-        assert(contents.includes(0))
+        const likes = blogsAtEnd.map(r => r.likes)
+        assert(likes.includes(0))
     })
 })
 
@@ -158,11 +141,11 @@ describe('API: DELETE blogs', () => {
             .delete(`/api/blogs/5a422b3a1b54a676234d17f9`)
             .expect(204)
 
-        const response = await api.get('/api/blogs')
+        const blogsAtEnd = await helper.blogsInDb()
 
-        const blogsAtEnd = response.body.map(r => r.title)
-        assert(blogsAtEnd.length === initialBlogs.length - 1)
-        assert(!blogsAtEnd.includes('Canonical string reduction'))
+        const titles = blogsAtEnd.map(r => r.title)
+        assert(titles.length === helper.initialBlogs.length - 1)
+        assert(!titles.includes('Canonical string reduction'))
     })
 })
 
@@ -195,13 +178,46 @@ describe('API: PUT blogs', () => {
             .expect(200)
             .expect('Content-Type', /application\/json/)
 
-        const response = await api.get('/api/blogs')
+        const blogsAtEnd = await helper.blogsInDb()
 
-        const authors = response.body.map(r => r.author)
+        const authors = blogsAtEnd.map(r => r.author)
         assert(authors.includes('Sebastian Fors'))
 
-        const likes = response.body.map(r => r.likes)
+        const likes = blogsAtEnd.map(r => r.likes)
         assert(likes.includes(10))
+    })
+})
+
+describe('when there is initially one user in db', () => {
+    beforeEach(async () => {
+        await User.deleteMany({})
+
+        const passwordHash = await bcrypt.hash('sekret', 10)
+        const user = new User({ username: 'root', passwordHash })
+
+        await user.save()
+    })
+
+    test('creation succeeds with a fresh username', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            username: 'forsen',
+            name: 'Sebastian Fors',
+            password: 'ILoveForsen',
+        }
+
+        await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDb()
+        assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
+
+        const usernames = usersAtEnd.map(u => u.username)
+        assert(usernames.includes(newUser.username))
     })
 })
 
