@@ -9,17 +9,32 @@ const User = require('../models/user')
 const api = supertest(app)
 const helper = require('./test_helper')
 
+let token
+let user
+
 beforeEach(async () => {
     await Blog.deleteMany({})
     await User.deleteMany({})
 
-    const newUser = new User({
+    const passwordHash = await bcrypt.hash('ILoveForsen', 10)
+    user = new User({
         username: 'forsen',
         name: 'Sebastian Fors',
-        password: 'ILoveForsen'
+        passwordHash
     })
 
-    await newUser.save()
+    await user.save()
+
+    const response = await api
+        .post('/api/login')
+        .send({
+            username: 'forsen',
+            password: 'ILoveForsen'
+        })
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+
+    token = response.body.token
 
     let blogObject = new Blog(helper.initialBlogs[0])
     await blogObject.save()
@@ -57,21 +72,18 @@ describe('API: GET blogs', () => {
 
 describe('API: POST blogs', () => {
     test('a valid blog can be added', async () => {
-        const users = await User.find({})
-        const user = users[0]
-
         const newBlog = {
-            _id: "5a422b891b54a676234d17fa",
+            _id: "5a422bc61b54a676234d17fc",
             title: "First class tests",
             author: "Robert C. Martin",
             url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
             likes: 10,
-            __v: 0,
-            user: user
+            __v: 0
         }
 
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${token}`)
             .send(newBlog)
             .expect(201)
             .expect('Content-Type', /application\/json/)
@@ -97,6 +109,7 @@ describe('API: POST blogs', () => {
 
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${token}`)
             .send(newBlog)
             .expect(400)
 
@@ -116,6 +129,7 @@ describe('API: POST blogs', () => {
 
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${token}`)
             .send(newBlog)
             .expect(400)
 
@@ -135,6 +149,7 @@ describe('API: POST blogs', () => {
 
         await api
             .post('/api/blogs')
+            .set('Authorization', `Bearer ${token}`)
             .send(newBlog)
             .expect(201)
             .expect('Content-Type', /application\/json/)
