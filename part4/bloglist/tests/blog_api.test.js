@@ -36,10 +36,9 @@ beforeEach(async () => {
 
     token = response.body.token
 
-    let blogObject = new Blog(helper.initialBlogs[0])
-    await blogObject.save()
-    blogObject = new Blog(helper.initialBlogs[1])
-    await blogObject.save()
+    const blogObjects = helper.initialBlogs.map(blog => new Blog({ ...blog, user: user._id }))
+    const promiseArray = blogObjects.map(blog => blog.save())
+    await Promise.all(promiseArray)
 })
 
 describe('API: GET blogs', () => {
@@ -162,15 +161,58 @@ describe('API: POST blogs', () => {
 })
 
 describe('API: DELETE blogs', () => {
-    test('a blog with an invalid id returns 404', async () => {
-      await api
-            .delete(`/api/blogs/g1bb3r1shid`)
-            .expect(404)
+    test('a blog with an invalid id returns 400', async () => {
+        const invalidId = 'g1bb3r1shid'
+        await api
+            .delete(`/api/blogs/${invalidId}`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(400)
+    })
+
+    test('a blog cannot be deleted with an invalid token', async () => {
+        await api
+            .delete(`/api/blogs/5a422b3a1b54a676234d17f9`)
+            .set('Authorization', `Bearer g1bb3r1sh`)
+            .expect(401)
+    })
+
+    test('a blog cannot be deleted without a token', async () => {
+        await api
+            .delete(`/api/blogs/5a422b3a1b54a676234d17f9`)
+            .expect(401)
+    })
+
+    test('a blog created by a different user cannot be deleted', async () => {
+        const passwordHash = await bcrypt.hash('ILoveForsen', 10)
+        const user = new User({
+            username: 'forsen2',
+            name: 'Sebastian Fors',
+            passwordHash
+        })
+
+        await user.save()
+
+        const response = await api
+            .post('/api/login')
+            .send({
+                username: 'forsen2',
+                password: 'ILoveForsen'
+            })
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        const token = response.body.token
+
+        await api
+            .delete(`/api/blogs/5a422b3a1b54a676234d17f9`)
+            .set('Authorization', `Bearer ${token}`)
+            .expect(403)
     })
 
     test('a blog can be deleted', async () => {
         await api
             .delete(`/api/blogs/5a422b3a1b54a676234d17f9`)
+            .set('Authorization', `Bearer ${token}`)
             .expect(204)
 
         const blogsAtEnd = await helper.blogsInDb()
