@@ -38,7 +38,7 @@ describe('Blog component', () => {
   })
 
   test('like button is clicked twice', async () => {
-    const { container } = render(<Blog blog={blog} updateBlog={mockUpdateBlog} removeBlog={mockRemoveBlog} />)
+    render(<Blog blog={blog} updateBlog={mockUpdateBlog} removeBlog={mockRemoveBlog} />)
 
     const user = userEvent.setup()
     const viewButton = screen.getByText('view')
