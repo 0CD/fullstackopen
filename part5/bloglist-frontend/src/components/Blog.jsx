@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 
 const Blog = (props) => {
@@ -33,6 +33,13 @@ const Blog = (props) => {
     props.removeBlog(blog)
   }
 
+  let canRemove = false
+  if (blog.user && props.user) {
+    if (blog.user.username === props.user.username) {
+      canRemove = true
+    }
+  }
+
   return (
     <div style={blogStyle} className="blog">
       <div className="blog-title-author">
@@ -41,8 +48,8 @@ const Blog = (props) => {
       <div style={showWhenVisible} className="blog-details">
         <div>{blog.url}</div>
         <div>{blog.likes} <button onClick={increaseLikes}>like</button></div>
-        <div>{blog.user.name}</div>
-        <button onClick={removeBlog}>remove</button>
+        <div>{blog.user ? (blog.user.name || blog.user.username || '') : ''}</div>
+        {canRemove && <button onClick={removeBlog}>remove</button>}
       </div>
     </div>
   )
@@ -51,7 +58,8 @@ const Blog = (props) => {
 Blog.propTypes = {
   blog: PropTypes.object.isRequired,
   updateBlog: PropTypes.func.isRequired,
-  removeBlog: PropTypes.func.isRequired
+  removeBlog: PropTypes.func.isRequired,
+  user: PropTypes.object.isRequired
 }
 
 export default Blog

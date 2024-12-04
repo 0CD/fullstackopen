@@ -79,7 +79,9 @@ const App = () => {
   const addBlog = async (blogObject) => {
     try {
       const newBlog = await blogService.create(blogObject)
-      setBlogs(blogs.concat(newBlog))
+
+      const newBlogWithUser = { ...newBlog, user }
+      setBlogs(blogs.concat(newBlogWithUser))
       blogFormRef.current.toggleVisibility()
 
       setMessage({
@@ -169,6 +171,7 @@ const App = () => {
             blog={blog}
             updateBlog={updateBlog}
             removeBlog={removeBlog}
+            user={user}
           />
         )}
       </div>
