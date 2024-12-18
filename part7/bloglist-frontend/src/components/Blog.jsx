@@ -1,22 +1,28 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
+import { useUser } from '../contexts/UserContext.jsx'
+import { useParams } from 'react-router-dom'
+import { Button, Form, Card, ListGroup } from 'react-bootstrap'
 
-const Blog = (props) => {
-  const [blog, setBlog] = useState(props.blog)
-  const [visible, setVisible] = useState(false)
-  const showWhenVisible = { display: visible ? '' : 'none' }
-  const buttonLabel = visible ? 'hide' : 'view'
+const Blog = ({ blogs, updateBlog, removeBlog, addComment }) => {
+  const { user } = useUser()
+  const [blog, setBlog] = useState(null)
+  const [comment, setComment] = useState('')
+  const { id } = useParams()
 
-  const blogStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5,
+  useEffect(() => {
+    if (blogs) {
+      const blog = blogs.find((blog) => blog.id === id)
+      setBlog(blog)
+    }
+  }, [blogs, id])
+
+  if (!blogs) {
+    return <div>Loading...</div>
   }
 
-  const toggleVisibility = () => {
-    setVisible(!visible)
+  if (!blog) {
+    return <div>Blog not found</div>
   }
 
   const increaseLikes = () => {
@@ -25,44 +31,90 @@ const Blog = (props) => {
       likes: blog.likes + 1,
     }
 
-    props.updateBlog(updatedBlog)
+    updateBlog(updatedBlog)
     setBlog(updatedBlog)
   }
 
-  const removeBlog = () => {
-    props.removeBlog(blog)
+  const handleRemoveBlog = () => {
+    removeBlog(blog)
+  }
+
+  const handleAddComment = (event) => {
+    event.preventDefault()
+    addComment(blog, comment)
+    setComment('')
   }
 
   let canRemove = false
-  if (blog.user && props.user) {
-    if (blog.user.username === props.user.username) {
+  if (blog.user && user) {
+    if (blog.user.username === user.username) {
       canRemove = true
     }
   }
 
   return (
-    <div style={blogStyle} className="blog">
-      <div className="blog-title-author">
-        {blog.title} {blog.author}{' '}
-        <button onClick={toggleVisibility}>{buttonLabel}</button>
-      </div>
-      <div style={showWhenVisible} className="blog-details">
-        <div>{blog.url}</div>
-        <div>
-          {blog.likes} <button onClick={increaseLikes}>like</button>
-        </div>
-        <div>{blog.user ? blog.user.name || blog.user.username || '' : ''}</div>
-        {canRemove && <button onClick={removeBlog}>remove</button>}
-      </div>
-    </div>
+    <Card className="mt-3">
+      <Card.Body>
+        <Card.Title className="d-flex justify-content-between align-items-center">
+          <span>
+            {blog.title} by {blog.author}
+          </span>
+          {canRemove && (
+            <Button variant="secondary" size="sm" onClick={handleRemoveBlog}>
+              remove
+            </Button>
+          )}
+        </Card.Title>
+        <Card.Text as="div">
+          <div>
+            <strong>URL: </strong>
+            <a href={blog.url} style={{ color: 'black' }}>
+              {blog.url}
+            </a>
+          </div>
+          <div>
+            <strong>Likes: </strong>
+            {blog.likes} likes{' '}
+            {user && (
+              <Button onClick={increaseLikes} variant="dark" size="sm">
+                like
+              </Button>
+            )}
+          </div>
+          <div>
+            <strong>Posted by: </strong>
+            {blog.user ? blog.user.name || blog.user.username || '' : ''}
+          </div>
+        </Card.Text>
+        <Form onSubmit={handleAddComment} className="mb-3 mt-2">
+          <Form.Group controlId="formComment">
+            <Form.Control
+              type="text"
+              value={comment}
+              required
+              placeholder="Add a comment"
+              onChange={({ target }) => setComment(target.value)}
+            />
+          </Form.Group>
+          <Button type="submit" variant="dark" className="w-100 mt-2">
+            Add comment
+          </Button>
+        </Form>
+        <Card.Subtitle className="mt-2 mb-2 text-muted">Comments</Card.Subtitle>
+        <ListGroup variant="flush">
+          {blog.comments.map((comment, index) => (
+            <ListGroup.Item key={index}>{comment}</ListGroup.Item>
+          ))}
+        </ListGroup>
+      </Card.Body>
+    </Card>
   )
 }
 
 Blog.propTypes = {
-  blog: PropTypes.object.isRequired,
   updateBlog: PropTypes.func.isRequired,
   removeBlog: PropTypes.func.isRequired,
-  user: PropTypes.object.isRequired,
+  addComment: PropTypes.func.isRequired,
 }
 
 export default Blog

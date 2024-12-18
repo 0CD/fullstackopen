@@ -1,5 +1,5 @@
-import PropTypes from 'prop-types'
 import { useNotification } from '../contexts/NotificationContext.jsx'
+import { Alert } from 'react-bootstrap'
 
 const Notification = () => {
   const { notification } = useNotification()
@@ -8,11 +8,19 @@ const Notification = () => {
   }
 
   if (notification.type === 'error') {
-    return <div className="error">{notification.text}</div>
+    return (
+      <div className="notification-container">
+        <Alert variant="danger">{notification.text}</Alert>
+      </div>
+    )
   }
 
   if (notification.type === 'success') {
-    return <div className="success">{notification.text}</div>
+    return (
+      <div className="notification-container">
+        <Alert variant="success">{notification.text}</Alert>
+      </div>
+    )
   }
 }
 
