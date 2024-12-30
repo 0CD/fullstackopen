@@ -1,15 +1,12 @@
-import { useQuery } from '@apollo/client'
-import { ALL_AUTHORS } from '../queries.js'
 import SetBirthYear from './SetBirthYear.jsx'
+import PropTypes from 'prop-types'
 
-const Authors = () => {
-  const result = useQuery(ALL_AUTHORS)
-
-  if (result.loading) {
+const Authors = ({ allAuthorsLoading, allAuthorsData }) => {
+  if (allAuthorsLoading) {
     return <div>Loading...</div>
   }
 
-  const authors = result.data.allAuthors
+  const authors = allAuthorsData.allAuthors
 
   return (
     <div>
@@ -30,9 +27,18 @@ const Authors = () => {
           ))}
         </tbody>
       </table>
-      <SetBirthYear authors={authors} loading={result.loading} />
+      <SetBirthYear authors={authors} loading={allAuthorsLoading} />
     </div>
   )
+}
+
+Authors.propTypes = {
+  allAuthorsLoading: PropTypes.bool.isRequired,
+  allAuthorsData: PropTypes.object.isRequired,
+}
+
+Authors.defaultProps = {
+  allAuthorsData: { allAuthors: [] },
 }
 
 export default Authors

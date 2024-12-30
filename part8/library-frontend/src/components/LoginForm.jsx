@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@apollo/client'
+import PropTypes from 'prop-types'
 import { LOGIN } from '../queries'
 
-// eslint-disable-next-line react/prop-types
 const LoginForm = ({ setToken }) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -27,7 +27,7 @@ const LoginForm = ({ setToken }) => {
   const handleLogin = async (event) => {
     event.preventDefault()
 
-    await login({ variables: { username, password } })
+    login({ variables: { username, password } })
   }
 
   return (
@@ -36,6 +36,7 @@ const LoginForm = ({ setToken }) => {
         <div>
           username
           <input
+            name="username"
             value={username}
             onChange={({ target }) => setUsername(target.value)}
           />
@@ -43,6 +44,7 @@ const LoginForm = ({ setToken }) => {
         <div>
           password
           <input
+            name="password"
             type="password"
             value={password}
             onChange={({ target }) => setPassword(target.value)}
@@ -52,6 +54,10 @@ const LoginForm = ({ setToken }) => {
       </form>
     </div>
   )
+}
+
+LoginForm.propTypes = {
+  setToken: PropTypes.func.isRequired,
 }
 
 export default LoginForm

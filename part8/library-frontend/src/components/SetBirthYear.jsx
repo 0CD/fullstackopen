@@ -1,9 +1,9 @@
 import { useState } from 'react'
+import PropTypes from 'prop-types'
 import Select from 'react-select'
 import { useMutation } from '@apollo/client'
 import { ALL_AUTHORS, EDIT_AUTHOR } from '../queries.js'
 
-// eslint-disable-next-line react/prop-types
 const SetBirthYear = ({ loading, authors }) => {
   const [selectedAuthor, setSelectedAuthor] = useState(null)
   const [year, setYear] = useState('')
@@ -31,7 +31,6 @@ const SetBirthYear = ({ loading, authors }) => {
 
   if (loading) return null
 
-  // eslint-disable-next-line react/prop-types
   const authorOptions = authors.map((author) => ({
     value: author.name,
     label: author.name,
@@ -63,6 +62,7 @@ const SetBirthYear = ({ loading, authors }) => {
         <div>
           year
           <input
+            name="year"
             type="number"
             value={year}
             onChange={({ target }) => setYear(target.value)}
@@ -72,6 +72,16 @@ const SetBirthYear = ({ loading, authors }) => {
       </form>
     </div>
   )
+}
+
+SetBirthYear.propTypes = {
+  loading: PropTypes.bool.isRequired,
+  authors: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      born: PropTypes.number,
+    })
+  ).isRequired,
 }
 
 export default SetBirthYear

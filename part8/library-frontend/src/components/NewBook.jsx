@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation } from '@apollo/client'
-import { ALL_AUTHORS, ALL_BOOKS, CREATE_BOOK } from '../queries.js'
+import { ALL_BOOKS, CREATE_BOOK } from '../queries.js'
+import { updateCache } from '../utils/cacheHelper.js'
 
 const NewBook = () => {
   const [title, setTitle] = useState('')
@@ -11,34 +12,21 @@ const NewBook = () => {
 
   const [createBook] = useMutation(CREATE_BOOK, {
     onError: (error) => {
-      console.error(error.graphQLErrors[0].message)
+      console.error(
+        error?.graphQLErrors?.[0]?.message ||
+          error?.message ||
+          'An unknown error occurred'
+      )
     },
     update: (cache, response) => {
-      cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
-        return {
-          allBooks: allBooks.concat(response.data.addBook),
-        }
-      })
-      cache.updateQuery({ query: ALL_AUTHORS }, ({ allAuthors }) => {
-        return {
-          allAuthors: allAuthors.map((author) => {
-            if (author.name === response.data.addBook.author.name) {
-              return {
-                ...author,
-                bookCount: author.bookCount + 1,
-              }
-            }
-            return author
-          }),
-        }
-      })
+      updateCache(cache, { query: ALL_BOOKS }, response.data.addBook)
     },
   })
 
   const submit = async (event) => {
     event.preventDefault()
 
-    await createBook({
+    createBook({
       variables: { title, author, published: parseInt(published, 10), genres },
     })
 
@@ -60,6 +48,7 @@ const NewBook = () => {
         <div>
           title
           <input
+            name="title"
             value={title}
             onChange={({ target }) => setTitle(target.value)}
           />
@@ -67,6 +56,7 @@ const NewBook = () => {
         <div>
           author
           <input
+            name="author"
             value={author}
             onChange={({ target }) => setAuthor(target.value)}
           />
@@ -74,6 +64,7 @@ const NewBook = () => {
         <div>
           published
           <input
+            name="published"
             type="number"
             value={published}
             onChange={({ target }) => setPublished(target.value)}
@@ -81,6 +72,7 @@ const NewBook = () => {
         </div>
         <div>
           <input
+            name="genre"
             value={genre}
             onChange={({ target }) => setGenre(target.value)}
           />

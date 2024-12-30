@@ -1,15 +1,16 @@
 import { useQuery } from '@apollo/client'
-import { useState } from 'react'
-import { ALL_BOOKS, ALL_BOOKS_BY_GENRE } from '../queries.js'
+import { useState, useEffect } from 'react'
+import PropTypes from 'prop-types'
+import { ALL_BOOKS_BY_GENRE } from '../queries.js'
 
-const Books = () => {
+const Books = ({ allBooksLoading, allBooksData }) => {
   const [selectedGenre, setSelectedGenre] = useState('all')
   const [genres, setGenres] = useState([])
 
-  const { loading: allBooksLoading, data: allBooksData } = useQuery(ALL_BOOKS, {
-    onCompleted: (data) => {
+  useEffect(() => {
+    if (allBooksData) {
       setGenres(
-        data.allBooks.reduce((genres, book) => {
+        allBooksData.allBooks.reduce((genres, book) => {
           book.genres.forEach((genre) => {
             if (!genres.includes(genre)) {
               genres.push(genre)
@@ -18,8 +19,8 @@ const Books = () => {
           return genres
         }, [])
       )
-    },
-  })
+    }
+  }, [allBooksData])
 
   const {
     loading: filteredBooksLoading,
@@ -91,6 +92,11 @@ const Books = () => {
       </table>
     </div>
   )
+}
+
+Books.propTypes = {
+  allBooksLoading: PropTypes.bool.isRequired,
+  allBooksData: PropTypes.object,
 }
 
 export default Books
