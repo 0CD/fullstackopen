@@ -1,6 +1,6 @@
-import patients from "../../data/patients";
-import { Patient, PublicPatient, NewPatient } from "../types";
-import { v1 as uuid } from "uuid";
+import patients from '../../data/patients';
+import { Patient, PublicPatient, NewPatient } from '../types';
+import { v1 as uuid } from 'uuid';
 
 const getEntries = (): Array<Patient> => {
   return patients;
