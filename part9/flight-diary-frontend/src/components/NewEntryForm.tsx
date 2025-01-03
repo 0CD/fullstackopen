@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NewDiaryEntry } from '../types';
+import { NewDiaryEntry, Visibility, Weather } from '../types';
 import { addDiaryEntry } from '../services/diaryService';
 import axios from 'axios';
 
@@ -8,8 +8,8 @@ import axios from 'axios';
 
 const NewEntryForm = () => {
   const [date, setDate] = useState<string>('');
-  const [weather, setWeather] = useState<string>('');
-  const [visibility, setVisibility] = useState<string>('');
+  const [weather, setWeather] = useState<Weather>('sunny' as Weather);
+  const [visibility, setVisibility] = useState<Visibility>('great' as Visibility);
   const [comment, setComment] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
@@ -27,8 +27,8 @@ const NewEntryForm = () => {
       await addDiaryEntry(newEntry);
 
       setDate('');
-      setWeather('');
-      setVisibility('');
+      setWeather('sunny' as Weather);
+      setVisibility('great' as Visibility);
       setComment('');
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -48,28 +48,30 @@ const NewEntryForm = () => {
           <input type='date' name='date' value={date} onChange={(event) => setDate(event.target.value)} />
         </div>
         <div>
+          Visibility
+          <select
+            name='visibility'
+            value={visibility as Visibility}
+            onChange={(event) => setVisibility(event.target.value as Visibility)}
+          >
+            <option value='great'>Great</option>
+            <option value='good'>Good</option>
+            <option value='ok'>Ok</option>
+            <option value='poor'>Poor</option>
+          </select>
+        </div>
+        <div>
           Weather
-          <select name='weather' value={weather} onChange={(event) => setWeather(event.target.value)}>
-            <option disabled value=''>
-              Select...
-            </option>
+          <select
+            name='weather'
+            value={weather as Weather}
+            onChange={(event) => setWeather(event.target.value as Weather)}
+          >
             <option value='sunny'>Sunny</option>
             <option value='rainy'>Rainy</option>
             <option value='cloudy'>Cloudy</option>
             <option value='stormy'>Stormy</option>
             <option value='windy'>Windy</option>
-          </select>
-        </div>
-        <div>
-          Visibility
-          <select name='visibility' value={visibility} onChange={(event) => setVisibility(event.target.value)}>
-            <option disabled value=''>
-              Select...
-            </option>
-            <option value='great'>Great</option>
-            <option value='good'>Good</option>
-            <option value='ok'>Ok</option>
-            <option value='poor'>Poor</option>
           </select>
         </div>
         <div>
